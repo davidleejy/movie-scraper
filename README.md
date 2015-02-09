@@ -8,6 +8,7 @@ python 2.7.x
 
 ## Usage
 python scrape.py *movie title*
+
 For example,
 ```
 $ python scrape.py seventh son
