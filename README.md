@@ -19,7 +19,7 @@ or
 
 python scrape.py *movie title*,,,*IMDb URL of movie*
 
-The 3 commas act is an argument delimiter - separating the title from the IMDb URL.
+The 3 commas act as a delimiter, separating the arguments - title and IMDb URL.
 
 
 
