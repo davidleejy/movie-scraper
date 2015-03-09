@@ -160,7 +160,8 @@ def get_imdb_details(url):
 # EXCEPTIONS: raised.
 def get_imdb_page_url(movie):
     try:
-      page = urllib2.urlopen(BASE_URL +"/find?" + movie.replace(" ", "-"))
+      movie_uri=urllib2.quote(movie.encode("utf8"))
+      page = urllib2.urlopen(BASE_URL +"/find?ref_=nv_sr_fn&q=" + movie_uri + "&s=all")
 
       soup = BeautifulSoup(page)
       div = soup.find('table', class_="findList")
