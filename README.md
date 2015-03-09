@@ -26,25 +26,16 @@ The 3 commas act as a delimiter, separating the arguments - title and IMDb URL.
 **Examples:**
 
 ```
+$ python scrape.py star wars 1999
+```
+![star wars example]
+(http://i.imgur.com/JP5RUon.jpg)
+
+
+```
 $ python scrape.py guardians of the galaxy,,,http://www.imdb.com/title/tt2015381
-```
-![Guardians Example]
-(http://i.imgur.com/rIgkaJh.png)
-________
-
-```
 $ python scrape.py black swan
-```
-![Black Swan Example]
-(http://i.imgur.com/Htj7lWq.png)
-________
-
-```
 $ python scrape.py walter mitty,,,http://www.imdb.com/title/tt0359950/
 ```
-![Walter Mitty Example]
-(http://i.imgur.com/5NhdMVZ.png)
-
-
 
 
