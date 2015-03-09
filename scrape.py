@@ -139,8 +139,16 @@ def get_imdb_details(url):
     soup = BeautifulSoup(page)
     div = soup.find('div', class_="titlePageSprite")
     movie_rating = div.contents[0]
-    div = soup.find('p', itemprop="description")
-    movie_description = div.contents[0] 
+    div_description = soup.find('p', itemprop="description")
+    link_to_full_description = div_description.find("a", href=True)
+    movie_description = ""
+    if  link_to_full_description is None:
+      movie_description = div_description.contents[0]
+    else:
+      page_full_desc=urllib2.urlopen(BASE_URL+link_to_full_description["href"])
+      soup_full_desc=BeautifulSoup(page_full_desc)
+      div_full_desc=soup_full_desc.find("p",class_="plotSummary")
+      movie_description=div_full_desc.contents[0]
     DivDirector = soup.find('div', itemprop="director")
     director = DivDirector.find('span', itemprop="name")
     movie_director = director.contents[0]

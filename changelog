@@ -4,5 +4,6 @@ CHANGELOG
 
 20150310
 - Improved the making sense of IMDb search results. Incorporated exact matching and approximate matching into the logic of picking a single entry from multiple entries in a search result.
+- Now can detect truncated movie descriptions on IMDb and seek out the full movie description.
 - Added exception handling so that program exits gracefully in the event of an error.
 - Refactored and improved code quality.
