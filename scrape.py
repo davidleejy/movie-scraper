@@ -2,11 +2,13 @@ from bs4 import BeautifulSoup
 #from urllib2 import urlopen
 import urllib2
 import re,sys
+import string
+import traceback
+from collections import namedtuple
 
 # IMDB
 BASE_URL = "http://www.imdb.com"
-movie_rating = 0
-movie_description = ""
+IMDb_Details = namedtuple("IMDb_Details", "rating director description")
 
 # Rotten Tomatoes
 rottenBaseURL = "http://www.rottentomatoes.com"
@@ -117,25 +119,23 @@ def getRottenMovieDescription(page):
 #--------------
 #IMDb
 
-#TODO: GLOBAL VARIABLES WTH!!!
-
-#
-#   Print the details of the found movie
-#
-
-def print_details(movie_description,movie_rating):
-    print "Movie Name : " + movie
-    print "Movie Rating : " + movie_rating
-    print "Movie Description : " + movie_description
+# Prints a IMDb_Details namedtupl object.
+def print_details(details):
+  try:
+    print "Director: " + details.director
+    print "Rating: " + details.rating
+    print "Description: " + details.description
     return
+  except:
+    print "Unrecognizable details provided."
+    print traceback.format_exc()
 
-#
-#   Get the details of the found movie. Scrape throu' for director and rating.
-#   More details to be added.
-#
 
-def get_details(link):
-    page = urllib2.urlopen(link)
+# Get a movie's details given an IMDb URL.
+# EXCEPTIONS: raise.
+def get_imdb_details(url):
+  try:
+    page = urllib2.urlopen(url)
     soup = BeautifulSoup(page)
     div = soup.find('div', class_="titlePageSprite")
     movie_rating = div.contents[0]
@@ -144,27 +144,76 @@ def get_details(link):
     DivDirector = soup.find('div', itemprop="director")
     director = DivDirector.find('span', itemprop="name")
     movie_director = director.contents[0]
-    print_details(movie_description,movie_rating)
-    return
+    return IMDb_Details(rating=movie_rating,director=movie_director,description=movie_description)
+  except:
+    raise
 
-#
-#   Find the movie, using imdb/find? tag. Get the first matched movie.
-#
+# Get a movie's IMDb page URL.
+# EXCEPTIONS: raised.
+def get_imdb_page_url(movie):
+    try:
+      page = urllib2.urlopen(BASE_URL +"/find?" + movie.replace(" ", "-"))
 
-def get_category_links(movie):
-    page = urllib2.urlopen(BASE_URL +"/find?" + movie)
-    soup = BeautifulSoup(page)
-    div = soup.find('table', class_="findList")
-    links = div.find('a', href=True)
+      soup = BeautifulSoup(page)
+      div = soup.find('table', class_="findList")
 
-    complete_link = BASE_URL + links['href']
-    #print "complete link:" + complete_link
-    get_details(complete_link)
-    return
-def format_movie():
-    movie.replace(" ","-")
-    return
+      links = div.find_all("td", class_="result_text")
+      
+      # Try exact matching
+      idx=exact_match_imdb_search_results(links,movie)
+      if idx != -1: # Try approximate matching
+        print "Exact match found in search results. Picked entry " + str(idx)
+      else:
+        idx=approx_match_imdb_search_results(links,movie)
+        if idx != -1:
+          print "Approximate match found in search results. Picked entry " + str(idx)
+        else:
+          title_without_punctuation=movie.translate(string.maketrans("",""), string.punctuation)
+          idx=approx_match_imdb_search_results(links,title_without_punctuation)
+          if idx != -1:
+            print "Approximate match found (after stripping title of punctuation) in search results. Picked entry " + str(idx)
+          else:
+            idx=0 
+            print "No exact or approximate matches in search results. Picked first search result entry. (index 0)."
 
+      link = links[idx].find('a', href=True)
+      return  BASE_URL + link['href']
+    except:
+      raise
+
+
+# Finds a result entry that matches exactly the movie title.
+def exact_match_imdb_search_results(results,movie):
+  idx=0
+  for entry in results:
+    text=entry.text
+    if string.find(text.lower(),movie.lower()) != -1:
+        return idx
+    idx+=1
+  return -1 # Failed
+
+
+# Finds a result entry that best matches the movie title.
+def approx_match_imdb_search_results(results,movie):
+  best_index=-1
+  best_similarity=0.0
+  movie_words=movie.lower().split(" ")
+  cur_index=0
+  for entry in results:
+    text=entry.text.lower()
+    #print("ap   " + text)
+    matchCount=0
+    for w in movie_words:
+      if string.find(text, w) != -1:
+        matchCount+=1
+        #print(w + " matches!")
+    similarity=matchCount/len(movie_words)
+    #print("similarity=" + str(similarity))
+    if similarity > best_similarity:
+      best_similarity=similarity
+      best_index=cur_index
+    cur_index+=1
+  return best_index
 
 
 
@@ -184,6 +233,32 @@ if len(argList) == 2:
 
 print("Title: " + movie)
 print("IMDbURL: " + str(IMDbURL))
+
+
+
+
+print "-----"
+print "IMDB"
+print "-----"
+imdb_details=None
+if IMDbURL is None:
+  try:
+    page_url=get_imdb_page_url(movie)
+    imdb_details=get_imdb_details(page_url)
+  except:
+    print("Extraction failed.")
+    print traceback.format_exc()
+else:
+  try:
+    imdb_details=get_imdb_details(IMDbURL)
+  except:
+    print("Extraction failed.")
+    print traceback.format_exc()
+if not imdb_details is None:
+  print_details(imdb_details)
+
+
+
 
 
 print "-----------------"
@@ -226,18 +301,4 @@ else:
 if rottenDesc is None:
     rottenDesc = "None found."
 print "Description: " + rottenDesc
-
-
-
-print "-----"
-print "IMDB"
-print "-----"
-
-if IMDbURL is None:
-    movie = movie.replace(" ","-")
-    get_category_links(movie)
-else:
-    get_details(IMDbURL)
-
-
 
